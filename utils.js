@@ -48,6 +48,9 @@ export function mapRange(value, inMin, inMax, outMin, outMax) {
 export function lerp(start, end, t) {
   return start * (1 - t) + end * t;
 }
+export function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
 /**
  * Helper function for debugging hand positions and current musical output.

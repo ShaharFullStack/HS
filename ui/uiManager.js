@@ -71,19 +71,19 @@ export function createUI() {
   uiContainer.appendChild(createLabeledControl('Octave:', octaveSelector));
   uiContainer.appendChild(createLabeledControl('Sound:', soundSelector));
 
-  rootSelector.addEventListener('change', function() {
+  rootSelector.addEventListener('change', function () {
     appState.config.selectedRoot = this.value;
     updateUI();
   });
-  scaleSelector.addEventListener('change', function() {
+  scaleSelector.addEventListener('change', function () {
     appState.config.selectedScale = this.value;
     updateUI();
   });
-  octaveSelector.addEventListener('change', function() {
+  octaveSelector.addEventListener('change', function () {
     appState.config.octave = parseInt(this.value);
     updateUI();
   });
-  soundSelector.addEventListener('change', function() {
+  soundSelector.addEventListener('change', function () {
     appState.config.selectedSound = this.value;
     updateSynths();
   });
@@ -116,10 +116,10 @@ export function addStartAudioButton() {
     startButton.removeEventListener('click', handleStartClick); // Prevent multiple clicks
 
     if (typeof Tone === 'undefined' || !Tone.start) {
-        console.error("Tone.js is not available to start audio.");
-        showMessage("שגיאה: ספריית האודיו לא טעונה.", 3000);
-        startButton.addEventListener('click', handleStartClick); // Re-add listener to allow retry
-        return;
+      console.error("Tone.js is not available to start audio.");
+      showMessage("שגיאה: ספריית האודיו לא טעונה.", 3000);
+      startButton.addEventListener('click', handleStartClick); // Re-add listener to allow retry
+      return;
     }
 
     if (Tone.context.state !== 'running') {
@@ -128,20 +128,20 @@ export function addStartAudioButton() {
         console.log("Audio Context Started by Button");
         initializeAudioEngine();
         if (document.body.contains(startButton)) {
-            document.body.removeChild(startButton);
+          document.body.removeChild(startButton);
         }
         showMessage('הזיזו את הידיים כדי לנגן!');
       }).catch(e => {
-          console.error("Error starting Tone.js AudioContext:", e);
-          showMessage('לא ניתן היה להפעיל אודיו. נסו שוב.', 3000);
-          startButton.addEventListener('click', handleStartClick); // Re-add listener
-        });
+        console.error("Error starting Tone.js AudioContext:", e);
+        showMessage('לא ניתן היה להפעיל אודיו. נסו שוב.', 3000);
+        startButton.addEventListener('click', handleStartClick); // Re-add listener
+      });
     } else {
       appState.audio.audioStarted = true;
       console.log("Audio Context was already running.");
       initializeAudioEngine();
       if (document.body.contains(startButton)) {
-          document.body.removeChild(startButton);
+        document.body.removeChild(startButton);
       }
       showMessage('אודיו מוכן. הזיזו ידיים!');
     }
@@ -174,15 +174,16 @@ export function showMessage(message, duration = 2000) {
   document.body.appendChild(messageEl);
   setTimeout(() => {
     if (document.body.contains(messageEl)) {
-        document.body.removeChild(messageEl);
+      document.body.removeChild(messageEl);
     }
   }, duration);
 }
 
 export function updateInstructions() {
-  const instructionsEl = document.getElementById('instructions');
-  if (instructionsEl) {
-    instructionsEl.innerHTML = `
+  setTimeout(() => {
+    const instructionsEl = document.getElementById('instructions');
+    if (instructionsEl) {
+      instructionsEl.innerHTML = `
       <h2>הוראות</h2>
       <p>הזז את הידיים לנגן מוזיקה!</p>
       <p>יד ימין: נגינת תוי מלודיה</p>
@@ -191,12 +192,12 @@ export function updateInstructions() {
       <p>בחר סולם וצליל מהממשק</p>
       <p>לחץ 'Start Audio' כדי להתחיל</p>
     `;
-  }
+    }
+  }, 1000);
 }
 
 export function updateUI() {
   updateNoteDisplay();
-  updateNoteMarkers();
   updateVisualKeyboard();
 }
 
@@ -248,20 +249,20 @@ export function createVisualKeyboard() {
   const keyboardContainer = document.getElementById('keyboard-visual');
   if (!keyboardContainer) return;
   keyboardContainer.innerHTML = '';
-  const notesToDisplay = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const notesToDisplay = ['C', 'C#' || 'Db', 'D', 'D#' || 'Eb', 'E', 'F', 'F#' || 'Gb', 'G', 'G#' || 'Ab', 'A', 'A#' || 'Bb', 'B'];
   notesToDisplay.forEach((noteName) => {
-      const key = document.createElement('div');
-      key.classList.add('key');
-      key.dataset.noteName = noteName;
-      if (noteName.includes('#')) {
-          key.style.backgroundColor = 'black'; key.style.borderColor = '#555';
-          key.style.width = '12px'; key.style.height = '60%';
-          key.style.marginLeft = '-6px'; key.style.marginRight = '-6px'; key.style.zIndex = '2';
-      } else {
-          key.style.backgroundColor = 'white'; key.style.borderColor = '#ccc';
-          key.style.width = '18px'; key.style.zIndex = '1';
-      }
-      keyboardContainer.appendChild(key);
+    const key = document.createElement('div');
+    key.classList.add('key');
+    key.dataset.noteName = noteName;
+    if (noteName.includes('#')) {
+      key.style.backgroundColor = 'black'; key.style.borderColor = '#555';
+      key.style.width = '12px'; key.style.height = '60%';
+      key.style.marginLeft = '-6px'; key.style.marginRight = '-6px'; key.style.zIndex = '2';
+    } else {
+      key.style.backgroundColor = 'white'; key.style.borderColor = '#ccc';
+      key.style.width = '18px'; key.style.zIndex = '1';
+    }
+    keyboardContainer.appendChild(key);
   });
 }
 

@@ -2,26 +2,16 @@
 // Assumes MediaPipe's Hands, Camera, and drawing_utils are globally available
 // e.g., via CDN: <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script> etc.
 
-import { drawNoteGrid } from '../visuals/scene.js';
-import { calculateDistance } from '../utils.js';
-import { getChordFromPosition, getNoteFromPosition } from '../music/musicLogic.js';
 import { playChord, playMelodyNote, setVolume, stopChord, stopMelody } from '../audio/audioEngine.js';
-import { showMessage } from '../ui/uiManager.js';
-import { MIN_PINCH_DIST, MAX_PINCH_DIST } from '../config.js';
-import { mapRange } from '../utils.js'; // Added for volume circle
 import { appState } from '../main.js'; // Import shared state
+import { getChordFromPosition, getNoteFromPosition } from '../music/musicLogic.js';
+import { showMessage } from '../ui/uiManager.js';
+import { calculateDistance } from '../utils.js';
+import { drawNoteGrid } from '../visuals/scene.js';
 
 
 export let canvasCtx, canvasElement, videoElement;
 export let hands; // MediaPipe Hands instance
-
-// Hand state moved to appState.hands
-// export let isLeftHandPresent = false;
-// export let isRightHandPresent = false;
-// export let leftHandLandmarks = null;
-// export let rightHandLandmarks = null;
-// let handDetected = false;
-
 
 export function setupWebcamElements() {
   videoElement = document.querySelector('.input_video');
@@ -138,22 +128,6 @@ function onHandResults(results) {
             setVolume('right', pinchDist); // Control melody volume
             const note = getNoteFromPosition(wrist.y);
             playMelodyNote(note);
-
-            canvasCtx.font = 'bold 24px Arial';
-            canvasCtx.fillStyle = 'magenta'; // Melody hand color
-            canvasCtx.fillText(note, (wrist.x * canvasElement.width) - 15, (wrist.y * canvasElement.height) - 30);
-            
-            const volumeLevel = mapRange(pinchDist, MIN_PINCH_DIST, MAX_PINCH_DIST, 0, 1);
-            canvasCtx.beginPath();
-            canvasCtx.arc((thumbTip.x + indexTip.x) / 2 * canvasElement.width, (thumbTip.y + indexTip.y) / 2 * canvasElement.height, 20 * volumeLevel, 0, Math.PI * 2);
-            canvasCtx.fillStyle = `rgba(100, 100, 255, ${volumeLevel})`; // Melody pinch color
-            canvasCtx.fill();
-            canvasCtx.beginPath();
-            canvasCtx.moveTo(thumbTip.x * canvasElement.width, thumbTip.y * canvasElement.height);
-            canvasCtx.lineTo(indexTip.x * canvasElement.width, indexTip.y * canvasElement.height);
-            canvasCtx.strokeStyle = 'rgba(255, 0, 255, 0.8)'; // Melody pinch line
-            canvasCtx.lineWidth = 5;
-            canvasCtx.stroke();
           }
         }
       } else { // MediaPipe 'Right' hand - this is hand on LEFT side of screen (user's left hand usually)
@@ -170,21 +144,21 @@ function onHandResults(results) {
             const chord = getChordFromPosition(wrist.y);
             playChord(chord);
 
-            canvasCtx.font = 'bold 24px Arial';
-            canvasCtx.fillStyle = 'white'; // Harmony hand color
-            canvasCtx.fillText(chord.name, (wrist.x * canvasElement.width) - 15, (wrist.y * canvasElement.height) - 30);
+            // canvasCtx.font = 'bold 24px Arial';
+            // canvasCtx.fillStyle = 'white'; // Harmony hand color
+            // canvasCtx.fillText(chord.name, (wrist.x * canvasElement.width) - 15, (wrist.y * canvasElement.height) - 30);
 
-            const volumeLevel = mapRange(pinchDist, MIN_PINCH_DIST, MAX_PINCH_DIST, 0, 1);
-            canvasCtx.beginPath();
-            canvasCtx.arc((thumbTip.x + indexTip.x) / 2 * canvasElement.width, (thumbTip.y + indexTip.y) / 2 * canvasElement.height, 20 * volumeLevel, 0, Math.PI * 2);
-            canvasCtx.fillStyle = `rgba(200, 55, 100, ${volumeLevel})`; // Harmony pinch color
-            canvasCtx.fill();
-            canvasCtx.beginPath();
-            canvasCtx.moveTo(thumbTip.x * canvasElement.width, thumbTip.y * canvasElement.height);
-            canvasCtx.lineTo(indexTip.x * canvasElement.width, indexTip.y * canvasElement.height);
-            canvasCtx.strokeStyle = 'rgb(255, 230, 0)'; // Harmony pinch line
-            canvasCtx.lineWidth = 3;
-            canvasCtx.stroke();
+            // const volumeLevel = mapRange(pinchDist, MIN_PINCH_DIST, MAX_PINCH_DIST, 0, 1);
+            // canvasCtx.beginPath();
+            // canvasCtx.arc((thumbTip.x + indexTip.x) / 2 * canvasElement.width, (thumbTip.y + indexTip.y) / 2 * canvasElement.height, 20 * volumeLevel, 0, Math.PI * 2);
+            // canvasCtx.fillStyle = `rgba(200, 55, 100, ${volumeLevel})`; // Harmony pinch color
+            // canvasCtx.fill();
+            // canvasCtx.beginPath();
+            // canvasCtx.moveTo(thumbTip.x * canvasElement.width, thumbTip.y * canvasElement.height);
+            // canvasCtx.lineTo(indexTip.x * canvasElement.width, indexTip.y * canvasElement.height);
+            // canvasCtx.strokeStyle = 'rgb(255, 230, 0)'; // Harmony pinch line
+            // canvasCtx.lineWidth = 3;
+            // canvasCtx.stroke();
           }
         }
       }

@@ -1,65 +1,151 @@
 <!DOCTYPE html>
 <html lang="he">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="shortcut icon" href="assets/images/favicon.ico" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hand Gesture Musical Instrument</title>
     <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js",
-        "tone": "https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js",
-        "@mediapipe/hands": "https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.min.js",
-        "@mediapipe/camera_utils": "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.min.js",
-        "@mediapipe/drawing_utils": "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js"
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.module.js",
+          "tone": "https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js",
+          "@mediapipe/hands": "https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.min.js",
+          "@mediapipe/camera_utils": "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.min.js",
+          "@mediapipe/drawing_utils": "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js"
+        }
       }
-    }
     </script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000a14; color: white; font-family: Arial, sans-serif; direction: rtl; }
-        #container { width: 100%; height: 100%; position: relative; }
-        .output_canvas { display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10; }
-        .input_video { display: none; }
-        .ui-container { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; }
-        .ui-control { margin-bottom: 5px; }
-        .ui-control label { margin-left: 5px; }
-        .ui-select { padding: 5px; border-radius: 3px; background-color: #333; color: white; border: 1px solid #555;}
-        #instructions { position: absolute; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; width: 250px; text-align: right; }
-        #note-display { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 5px; font-size: 18px; }
-        #note-display.playing { color: #4CAF50; }
-        #note-markers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
-        .marker { position: absolute; left: 0; width: 100%; height: 1px; background-color: rgba(255,255,255,0.2); }
-        .marker.octave-divider { background-color: rgba(255,255,255,0.5); height: 2px; }
-        .marker-label { position: absolute; left: 10px; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 12px; }
-        #keyboard-visual {
-            display: flex;
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 101;
-            background: rgba(50,50,50,0.8);
-            padding: 5px;
-            border-radius: 5px;
-            height: 60px;
-        }
-        .key {
-            width: 20px;
-            height: 50px;
-            border: 1px solid #222;
-            margin: 0 1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            border-radius: 3px;
-        }
-        .key.active {
-            border: 2px solid yellow;
-        }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #000a14;
+        color: white;
+        font-family: Arial, sans-serif;
+        direction: rtl;
+      }
+      #container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform: scaleX(-1);
+      }
+      .output_canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+      }
+      .input_video {
+        display: none;
+      }
+      .ui-container {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .ui-control {
+        margin-bottom: 5px;
+      }
+      .ui-control label {
+        margin-left: 5px;
+      }
+      .ui-select {
+        padding: 5px;
+        border-radius: 3px;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+      }
+      #instructions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px;
+        border-radius: 8px;
+        width: 250px;
+        text-align: right;
+      }
+      #note-display {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 18px;
+      }
+      #note-display.playing {
+        color: #4caf50;
+      }
+      #note-markers {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .marker {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+      .marker.octave-divider {
+        background-color: rgba(255, 255, 255, 0.5);
+        height: 2px;
+      }
+      .marker-label {
+        position: absolute;
+        left: 10px;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 12px;
+      }
+      #keyboard-visual {
+        display: flex;
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 101;
+        background: rgba(50, 50, 50, 0.8);
+        padding: 5px;
+        border-radius: 5px;
+        height: 60px;
+      }
+      .key {
+        width: 20px;
+        height: 50px;
+        border: 1px solid #222;
+        margin: 0 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        border-radius: 3px;
+      }
+      .key.active {
+        border: 2px solid yellow;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="container"></div>
     <video class="input_video"></video>
     <canvas class="output_canvas" width="1280px" height="720px"></canvas>
@@ -67,8 +153,7 @@
     <div id="note-display"></div>
     <div id="note-markers"></div>
     <div id="keyboard-visual"></div>
-    
-    <script type="module" src="visuals/particleSystem.js"></script>
+
     <script type="module" src="main.js"></script>
-</body>
+  </body>
 </html>
