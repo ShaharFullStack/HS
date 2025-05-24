@@ -6,11 +6,11 @@ import { appState } from '../main.js';
 import { lerp } from '../utils.js';
 
 // Configuration constants
-const PARTICLE_COUNT = 3000;
+const PARTICLE_COUNT = 1000;
 const ACCENT_PARTICLE_COUNT = 0;
 const PINCH_THRESHOLD_CLOSED = 10; // World units for pinch detection
 const PINCH_THRESHOLD_OPEN = 30;   // Slightly larger to prevent flickering on release
-const ATTRACTION_RADIUS = 40;      // Radius within which particles are attracted to a pinch
+const ATTRACTION_RADIUS = 60;      // Radius within which particles are attracted to a pinch
 const SWIPE_RADIUS = 20;           // Radius for swipe gesture effect
 const SWIPE_FORCE_MULTIPLIER = 0.2; // Force multiplier for swipe gestures
 
@@ -707,7 +707,7 @@ initParticleSystem() {
                         particleData.velocity.add(tempAttractionDirection.clone().multiplyScalar(attractionForceMagnitude));
 
                         // Enhanced swirling effect
-                        const upVector = new THREE.Vector3(0, 1, 1); // Define 'up' for consistent swirl if desired
+                        const upVector = new THREE.Vector3(0, 0, 1); // Define 'up' for consistent swirl if desired
                         tempTangentDirection.crossVectors(tempAttractionDirection, upVector).normalize();
 
                         if (tempTangentDirection.lengthSq() > 0.001) { // Ensure non-zero tangent
