@@ -8,8 +8,8 @@ export let selectedSound = 'pad';
 
 // Scales definition
 export const scales = {
-  major: [0, 2, 4, 5, 7, 9, 11, 12],
-  minor: [0, 2, 3, 5, 7, 8, 10, 12],
+  major: [0, 2, 4, 5, 7, 9, 11],
+  minor: [0, 2, 3, 5, 7, 8, 10],
   pentatonic: [0, 2, 4, 7, 9, 12],
   majorBlues: [0, 3, 5, 6, 7, 10, 12],
   minorBlues: [0, 3, 5, 6, 7, 10, 12],
@@ -39,10 +39,10 @@ export const soundPresets = {
     oscillator: { type: 'sine4' },
     envelope: { attack: 0.01, decay: 0.3, sustain: 0.2, release: 1.5 }
   },
-  // synth: { // Duplicate entry, keeping one
-  //   oscillator: { type: 'sine' },
-  //   envelope: { attack: 0.05, decay: 0.2, sustain: 0.6, release: 0.8 }
-  // },
+  synth2: { // Duplicate entry, keeping one
+    oscillator: { type: 'sine2' },
+    envelope: { attack: 0.0005, decay: 0.02, sustain: 0.9, release: 0.5 }
+  },
   pad: {
     oscillator: { type: 'sine8' },
     envelope: { attack: 0.4, decay: 0.7, sustain: 0.6, release: 2 }

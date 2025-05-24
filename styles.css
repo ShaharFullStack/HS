@@ -1,0 +1,222 @@
+/* General Body and Page Styles */
+body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #001e3c, #000a14);
+    color: #f0f0f0;
+    font-family: 'Segoe UI', 'Open Sans', Arial, sans-serif;
+    direction: rtl; /* Right-to-left for Hebrew */
+}
+
+/* Main Container and Canvas/Video Elements */
+#container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform: scaleX(-1); /* Mirrors the camera feed */
+}
+
+.output_canvas {
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    display: block;    
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    filter: brightness(1) contrast(1); /* Slightly enhance the visual feed */
+}
+
+.input_video {
+    display: none; /* Hidden as it's processed by JavaScript */
+}
+
+/* UI Overlay Elements General Styling */
+.ui-overlay {
+    position: absolute;
+    z-index: 100;
+    background: rgba(0, 10, 30, 0.8);
+    padding: 14px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(100, 150, 255, 0.2);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.ui-overlay:hover {
+    background: rgba(0, 15, 40, 0.85);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* UI Controls Container */
+.ui-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    background: rgba(0, 10, 30, 0.8);
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(100, 150, 255, 0.2);
+    backdrop-filter: blur(5px);
+    min-width: 220px;
+}
+
+.ui-control {
+    margin-bottom: 12px;
+}
+
+.ui-control label {
+    margin-left: 6px;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #aed4ff;
+    font-weight: 500;
+}
+
+.ui-select {
+    padding: 8px 10px;
+    border-radius: 6px;
+    background-color: rgba(50, 70, 100, 0.7);
+    color: white;
+    border: 1px solid rgba(100, 150, 255, 0.4);
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.ui-select:hover, .ui-select:focus {
+    background-color: rgba(60, 90, 130, 0.8);
+    border-color: rgba(130, 180, 255, 0.6);
+    outline: none;
+}
+
+/* Instructions Box */
+#instructions {
+    position: absolute;
+    z-index: 100;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    text-align: right;
+    background: rgba(0, 10, 30, 0.8);
+    padding: 18px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(100, 150, 255, 0.2);
+    backdrop-filter: blur(5px);
+    line-height: 1.5;
+}
+
+#instructions h3 {
+    color: #7cb5ff;
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+}
+
+/* Note Display */
+#note-display {
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 25px;
+    font-size: 1.3em;
+    border-radius: 20px;
+    background: rgba(0, 15, 40, 0.8);
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+#note-display.playing {
+    color: #7cffb2;
+    background: rgba(0, 40, 20, 0.8);
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(124, 255, 178, 0.4);
+    transform: translateX(-50%) scale(1.05);
+}
+
+/* Note Markers (Lines on screen) */
+#note-markers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.marker {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: rgba(100, 150, 255, 0.2);
+    box-shadow: 0 0 2px rgba(100, 150, 255, 0.3);
+}
+
+.marker.octave-divider {
+    background-color: rgba(100, 150, 255, 0.5);
+    height: 2px;
+    box-shadow: 0 0 4px rgba(100, 150, 255, 0.4);
+}
+
+.marker-label {
+    position: absolute;
+    left: 15px;
+    transform: translateY(-50%);
+    color: rgba(180, 210, 255, 0.8);
+    font-size: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Keyboard Visualizer */
+#keyboard-visual {
+    display: flex;
+    position: absolute;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 101;
+    background: rgba(30, 40, 60, 0.9);
+    padding: 12px;
+    border-radius: 12px;
+    height: 70px;
+    gap: 3px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(100, 150, 255, 0.3);
+}
+
+.key {
+    width: 24px;
+    height: 60px;
+    border: 1px solid #333;
+    background: linear-gradient(to bottom, #fff, #e0e0e0);
+    color: #333;
+    display: flex;
+    align-items: flex-end; /* Text at bottom of key */
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 4px 4px 6px 6px;
+    transition: all 0.2s ease;
+    padding-bottom: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.key.active {
+    background: linear-gradient(to bottom, #ffde59, #ffc107);
+    border-color: #e6a800;
+    color: #000;
+    transform: translateY(2px);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
+}

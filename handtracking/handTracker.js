@@ -1,17 +1,29 @@
-// handtracking/handTracker.js
-// Assumes MediaPipe's Hands, Camera, and drawing_utils are globally available
-// e.g., via CDN: <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script> etc.
+// handtracking/handTracker.js - Optimized Version
 
 import { playChord, playMelodyNote, setVolume, stopChord, stopMelody } from '../audio/audioEngine.js';
-import { appState } from '../main.js'; // Import shared state
+import { appState } from '../main.js';
 import { getChordFromPosition, getNoteFromPosition } from '../music/musicLogic.js';
 import { showMessage } from '../ui/uiManager.js';
 import { calculateDistance } from '../utils.js';
 import { drawNoteGrid } from '../visuals/scene.js';
 
-
 export let canvasCtx, canvasElement, videoElement;
-export let hands; // MediaPipe Hands instance
+export let hands;
+
+// Performance optimization variables
+let frameCount = 0;
+let lastAudioUpdate = 0;
+let lastDrawUpdate = 0;
+let previousStates = {
+  leftHand: { note: null, volume: null, isPresent: false },
+  rightHand: { note: null, volume: null, isPresent: false }
+};
+
+// Configuration constants
+const AUDIO_UPDATE_INTERVAL = 50; // Update audio every 50ms (20 FPS)
+const DRAW_UPDATE_INTERVAL = 33;  // Update visuals every 33ms (30 FPS)
+const POSITION_THRESHOLD = 0.02;  // Minimum change to trigger audio update
+const VOLUME_THRESHOLD = 0.05;    // Minimum volume change to trigger update
 
 export function setupWebcamElements() {
   videoElement = document.querySelector('.input_video');
@@ -34,33 +46,35 @@ export function setupHandTracking() {
   }
 
   try {
-    hands = new Hands({ // Assuming Hands is global
+    hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
 
     hands.setOptions({
       maxNumHands: 2,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.75,
-      minTrackingConfidence: 0.75
+      modelComplexity: 0, // Reduced from 1 for better performance
+      minDetectionConfidence: 0.7, // Slightly reduced from 0.75
+      minTrackingConfidence: 0.7    // Slightly reduced from 0.75
     });
 
     hands.onResults(onHandResults);
 
-    const mpCamera = new Camera(videoElement, { // Assuming Camera is global
+    const mpCamera = new Camera(videoElement, {
       onFrame: async () => {
-        if (videoElement.readyState >= 2) { // VIDEO_CURRENT_DATA_AVAILABLE or more
+        // Throttle hand detection to every 2nd frame for better performance
+        frameCount++;
+        if (frameCount % 2 === 0 && videoElement.readyState >= 2) {
           await hands.send({ image: videoElement });
         }
       },
-      width: 1420, // Match canvas width
-      height: 772 // Match canvas height
+      width: 1420,
+      height: 772
     });
 
     mpCamera.start()
       .then(() => {
         console.log("Camera started successfully.");
-        if (!appState.audio.audioStarted) { // Only show if audio not yet started by button
+        if (!appState.audio.audioStarted) {
              showMessage("Camera is on. Press 'Start Audio' to play.");
         }
       })
@@ -75,10 +89,25 @@ export function setupHandTracking() {
   }
 }
 
+function shouldUpdateAudio(currentTime) {
+  return currentTime - lastAudioUpdate > AUDIO_UPDATE_INTERVAL;
+}
+
+function shouldUpdateDraw(currentTime) {
+  return currentTime - lastDrawUpdate > DRAW_UPDATE_INTERVAL;
+}
+
+function hasSignificantChange(current, previous, threshold) {
+  if (!previous) return true;
+  return Math.abs(current - previous) > threshold;
+}
 
 function onHandResults(results) {
   if (!canvasCtx || !canvasElement) return;
 
+  const currentTime = performance.now();
+  
+  // Update hand presence state
   let wasLeftHandPresent = appState.hands.isLeftHandPresent;
   let wasRightHandPresent = appState.hands.isRightHandPresent;
   appState.hands.isLeftHandPresent = false;
@@ -87,36 +116,32 @@ function onHandResults(results) {
   appState.hands.rightHandLandmarks = null;
   appState.hands.handDetected = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
 
-  canvasCtx.save();
-  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-  drawNoteGrid(canvasCtx, canvasElement.width, canvasElement.height);
+  // Only update visuals if enough time has passed
+  const shouldDraw = shouldUpdateDraw(currentTime);
+  if (shouldDraw) {
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    drawNoteGrid(canvasCtx, canvasElement.width, canvasElement.height);
+    lastDrawUpdate = currentTime;
+  }
 
   if (appState.hands.handDetected) {
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0 && !appState.hands.initialHandDetected) {
         console.log(`Detected ${results.multiHandLandmarks.length} hand(s)`);
-        appState.hands.initialHandDetected = true; // To prevent logging on every frame
+        appState.hands.initialHandDetected = true;
     }
+
+    const shouldUpdateAudioNow = shouldUpdateAudio(currentTime);
 
     for (let i = 0; i < results.multiHandLandmarks.length; i++) {
       if (!results.multiHandedness || !results.multiHandedness[i]) continue;
 
       const classification = results.multiHandedness[i];
       const landmarks = results.multiHandLandmarks[i];
-      const isLeftHandMediaPipe = classification.label === 'Left'; // MediaPipe's definition
+      const isLeftHandMediaPipe = classification.label === 'Left';
 
-      // Correcting for mirrored video: What MediaPipe calls "Left" appears as the user's right hand on screen.
-      // And what MediaPipe calls "Right" appears as the user's left hand on screen.
-      // So, we effectively swap them for our logic if video is mirrored (common for selfie view).
-      // For this application:
-      // - Melody is often played by the dominant (usually right) hand.
-      // - Harmony by the other (usually left) hand.
-      // If MediaPipe 'Left' is user's right hand (appears on right side of screen):
-      // This hand will control MELODY.
-      // If MediaPipe 'Right' is user's left hand (appears on left side of screen):
-      // This hand will control HARMONY.
-
-      if (isLeftHandMediaPipe) { // This is the hand on the RIGHT side of the screen (user's right hand usually)
-        appState.hands.isRightHandPresent = true; // Our app's "right hand" for melody
+      if (isLeftHandMediaPipe) {
+        appState.hands.isRightHandPresent = true;
         appState.hands.rightHandLandmarks = landmarks;
 
         if (landmarks && landmarks.length > 8) {
@@ -125,13 +150,26 @@ function onHandResults(results) {
             const thumbTip = landmarks[4];
             const indexTip = landmarks[8];
             const pinchDist = calculateDistance(thumbTip, indexTip);
-            setVolume('right', pinchDist); // Control melody volume
             const note = getNoteFromPosition(wrist.y);
-            playMelodyNote(note);
+
+            // Only update audio if enough time has passed and values changed significantly
+            if (shouldUpdateAudioNow) {
+              const prevState = previousStates.rightHand;
+              
+              if (hasSignificantChange(pinchDist, prevState.volume, VOLUME_THRESHOLD)) {
+                setVolume('right', pinchDist);
+                prevState.volume = pinchDist;
+              }
+              
+              if (note !== prevState.note) {
+                playMelodyNote(note);
+                prevState.note = note;
+              }
+            }
           }
         }
-      } else { // MediaPipe 'Right' hand - this is hand on LEFT side of screen (user's left hand usually)
-        appState.hands.isLeftHandPresent = true; // Our app's "left hand" for harmony
+      } else {
+        appState.hands.isLeftHandPresent = true;
         appState.hands.leftHandLandmarks = landmarks;
 
         if (landmarks && landmarks.length > 8) {
@@ -140,48 +178,65 @@ function onHandResults(results) {
             const thumbTip = landmarks[4];
             const indexTip = landmarks[8];
             const pinchDist = calculateDistance(thumbTip, indexTip);
-            setVolume('left', pinchDist); // Control harmony volume
             const chord = getChordFromPosition(wrist.y);
-            playChord(chord);
 
-            // canvasCtx.font = 'bold 24px Arial';
-            // canvasCtx.fillStyle = 'white'; // Harmony hand color
-            // canvasCtx.fillText(chord.name, (wrist.x * canvasElement.width) - 15, (wrist.y * canvasElement.height) - 30);
-
-            // const volumeLevel = mapRange(pinchDist, MIN_PINCH_DIST, MAX_PINCH_DIST, 0, 1);
-            // canvasCtx.beginPath();
-            // canvasCtx.arc((thumbTip.x + indexTip.x) / 2 * canvasElement.width, (thumbTip.y + indexTip.y) / 2 * canvasElement.height, 20 * volumeLevel, 0, Math.PI * 2);
-            // canvasCtx.fillStyle = `rgba(200, 55, 100, ${volumeLevel})`; // Harmony pinch color
-            // canvasCtx.fill();
-            // canvasCtx.beginPath();
-            // canvasCtx.moveTo(thumbTip.x * canvasElement.width, thumbTip.y * canvasElement.height);
-            // canvasCtx.lineTo(indexTip.x * canvasElement.width, indexTip.y * canvasElement.height);
-            // canvasCtx.strokeStyle = 'rgb(255, 230, 0)'; // Harmony pinch line
-            // canvasCtx.lineWidth = 3;
-            // canvasCtx.stroke();
+            // Only update audio if enough time has passed and values changed significantly
+            if (shouldUpdateAudioNow) {
+              const prevState = previousStates.leftHand;
+              
+              if (hasSignificantChange(pinchDist, prevState.volume, VOLUME_THRESHOLD)) {
+                setVolume('left', pinchDist);
+                prevState.volume = pinchDist;
+              }
+              
+              if (chord !== prevState.note) {
+                playChord(chord);
+                prevState.note = chord;
+              }
+            }
           }
         }
       }
-      // Draw landmarks and connections (color based on MediaPipe's label for consistency with its drawing utils)
-      const handColor = isLeftHandMediaPipe ? 'rgba(0, 255, 200, 0.8)' : 'rgb(231, 150, 0)'; // Original colors
-      if (window.drawConnectors && window.HAND_CONNECTIONS) { // Check if drawing_utils are loaded
-        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: handColor, lineWidth: 10 });
-        drawLandmarks(canvasCtx, landmarks, { color: handColor, lineWidth: 1, radius: 2 });
+
+      // Only draw landmarks if we're updating visuals this frame
+      if (shouldDraw) {
+        const handColor = isLeftHandMediaPipe ? 'rgba(0, 255, 200, 0.8)' : 'rgb(231, 150, 0)';
+        if (window.drawConnectors && window.HAND_CONNECTIONS) {
+          drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: handColor, lineWidth: 6 }); // Reduced line width
+          drawLandmarks(canvasCtx, landmarks, { color: handColor, lineWidth: 1, radius: 1 }); // Reduced radius
+        }
       }
     }
-  } else { // No hands detected
-    appState.hands.initialHandDetected = false; // Reset for next detection
-    if (wasRightHandPresent) stopMelody(); // If melody hand was present and now gone
-    if (wasLeftHandPresent) stopChord();   // If harmony hand was present and now gone
+
+    // Update audio timestamp if we processed audio this frame
+    if (shouldUpdateAudioNow) {
+      lastAudioUpdate = currentTime;
+    }
+
+  } else {
+    // No hands detected
+    appState.hands.initialHandDetected = false;
+    if (wasRightHandPresent) {
+      stopMelody();
+      previousStates.rightHand = { note: null, volume: null, isPresent: false };
+    }
+    if (wasLeftHandPresent) {
+      stopChord();
+      previousStates.leftHand = { note: null, volume: null, isPresent: false };
+    }
   }
 
   // Stop sounds if a specific hand disappears
   if (!appState.hands.isRightHandPresent && wasRightHandPresent) {
     stopMelody();
+    previousStates.rightHand = { note: null, volume: null, isPresent: false };
   }
   if (!appState.hands.isLeftHandPresent && wasLeftHandPresent) {
     stopChord();
+    previousStates.leftHand = { note: null, volume: null, isPresent: false };
   }
 
-  canvasCtx.restore();
+  if (shouldDraw) {
+    canvasCtx.restore();
+  }
 }

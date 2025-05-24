@@ -179,22 +179,32 @@ export function showMessage(message, duration = 2000) {
   }, duration);
 }
 
-export function updateInstructions() {
-  setTimeout(() => {
-    const instructionsEl = document.getElementById('instructions');
-    if (instructionsEl) {
-      instructionsEl.innerHTML = `
-      <h2>הוראות</h2>
-      <p>הזז את הידיים לנגן מוזיקה!</p>
-      <p>יד ימין: נגינת תוי מלודיה</p>
-      <p>יד שמאל: נגינת אקורדים</p>
-      <p>מחוות צביטה: שליטה בווליום</p>
-      <p>בחר סולם וצליל מהממשק</p>
-      <p>לחץ 'Start Audio' כדי להתחיל</p>
-    `;
-    }
-  }, 1000);
-}
+// export function updateInstructions() {
+//   const instructionsEl = document.getElementById('instructions');
+//   if (!instructionsEl) return;
+//   instructionsEl.innerHTML = `
+//     <h2>הוראות</h2>
+//     <p>השתמשו בידיים כדי לנגן תווים ואקורדים.</p>
+//     <p>בחרו סולם ותו על ידי הזזת הידיים.</p>
+//     <p>השתמשו במקלדת הוויזואלית כדי לראות אילו תווים מנוגנים.</p>
+// `;
+//   instructionsEl.style.position = 'fixed';
+//   instructionsEl.style.top = '10%';
+//   instructionsEl.style.left = '50%';
+//   instructionsEl.style.backgroundColor = 'rgba(0,0,0,0.85)';
+//   instructionsEl.style.color = 'white';
+//   instructionsEl.style.padding = '15px 25px';
+//   instructionsEl.style.borderRadius = '8px';
+//   instructionsEl.style.zIndex = '1001';
+//   instructionsEl.style.fontSize = '20px';
+//   instructionsEl.style.fontFamily = 'Arial, sans-serif';
+//   instructionsEl.style.textAlign = 'center';
+//   setTimeout(() => {
+//     if (document.body.contains(instructionsEl)) {
+//       document.body.removeChild(instructionsEl);
+//     }
+//   }, 10000);
+// }
 
 export function updateUI() {
   updateNoteDisplay();
@@ -254,7 +264,7 @@ export function createVisualKeyboard() {
     const key = document.createElement('div');
     key.classList.add('key');
     key.dataset.noteName = noteName;
-    if (noteName.includes('#')) {
+    if (noteName.includes('#' || noteName.includes('b'))) {
       key.style.backgroundColor = 'black'; key.style.borderColor = '#555';
       key.style.width = '12px'; key.style.height = '60%';
       key.style.marginLeft = '-6px'; key.style.marginRight = '-6px'; key.style.zIndex = '2';

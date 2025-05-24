@@ -6,11 +6,11 @@ import { appState } from '../main.js';
 import { lerp } from '../utils.js';
 
 // Configuration constants
-const PARTICLE_COUNT = 3000;
+const PARTICLE_COUNT = 1000;
 const ACCENT_PARTICLE_COUNT = 0;
 const PINCH_THRESHOLD_CLOSED = 10; // World units for pinch detection
 const PINCH_THRESHOLD_OPEN = 30;   // Slightly larger to prevent flickering on release
-const ATTRACTION_RADIUS = 40;      // Radius within which particles are attracted to a pinch
+const ATTRACTION_RADIUS = 50;      // Radius within which particles are attracted to a pinch
 const SWIPE_RADIUS = 20;           // Radius for swipe gesture effect
 const SWIPE_FORCE_MULTIPLIER = 0.2; // Force multiplier for swipe gestures
 
@@ -38,8 +38,8 @@ export class HandReactiveParticles {
         this.scene.background = new THREE.Color(0x000000);
 
         // Further reduce lighting to avoid brightness
-        this.pointLight = new THREE.PointLight(0xffffff, 0.1, 100); // Reduced from 0.3
-        this.pointLight.position.set(0, 0, 0);
+        this.pointLight = new THREE.PointLight(0xffffff, 0.2, 50); // Reduced from 0.3
+        this.pointLight.position.set(0, 0, 100);
         this.scene.add(this.pointLight);
 
         // Keep ambient light extremely dim
@@ -69,7 +69,7 @@ export class HandReactiveParticles {
         };
 
         // World scale for converting normalized coordinates to world space
-        this.worldScale = { x: 240, y: 120, z: 50 };
+        this.worldScale = { x: 200, y: 150, z: 50 };
 
         // Initialize systems
         this.initParticleSystem();
@@ -113,7 +113,7 @@ initParticleSystem() {
 
             if (distributionChoice < 0.7) {
                 // Spherical distribution (most particles)
-                const radius = Math.random() * 70 +10;
+                const radius = Math.random() * 70 + 30;
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
                 positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
@@ -228,7 +228,7 @@ initParticleSystem() {
     gl_PointSize = size * pulse * (550.0 / -mvPosition.z);
     
     // Animation phase for glow effect
-    vPulse = 0.5 + 0.5 * sin(time * 3.0 + uniqueTime * 2.0);
+    vPulse = 0.5 + 0.5 * sin(time * 3.0 + uniqueTime * 4.0);
     
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -245,7 +245,7 @@ initParticleSystem() {
                 attractPoint: { value: new THREE.Vector3(5, 0, 0) },
                 attractForce: { value: 0 },
                 bloomThreshold: { value: 0.7 },
-                bloomStrength: { value: 0.8 },
+                bloomStrength: { value: 0.5 },
                 resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
             },
             vertexShader: vertexShader,
@@ -260,7 +260,7 @@ initParticleSystem() {
                     float dist = length(center);
                     
                     // Apply soft edge to particle with variation based on pulse
-                    float alpha = smoothstep(0.8, 0.3 - vPulse * 0.1, dist);
+                    float alpha = smoothstep(0.8, 0.3 - vPulse * 0.2, dist);
                     
                     // Define light properties
                     vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
@@ -274,7 +274,7 @@ initParticleSystem() {
                     float diffuse = max(dot(normal, lightDir), 0.0);
                     
                     // Compute specular lighting with pulse effect
-                    vec3 viewDir = vec3(0.0, 0.0, 0.8);
+                    vec3 viewDir = vec3(0.0, 0.0, 1.0);
                     vec3 reflectDir = reflect(-lightDir, normal);
                     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
                     
@@ -1156,7 +1156,7 @@ initParticleSystem() {
     // Randomly create bursts of color among particles
     createColorBursts() {
         // Only proceed occasionally (roughly every 2 seconds with some randomness)
-        if (Math.random() > 0.2) return;
+        if (Math.random() > 0.02) return;
 
         const positions = this.particleSystem.geometry.attributes.position.array;
         const colors = this.particleSystem.geometry.attributes.color.array;
