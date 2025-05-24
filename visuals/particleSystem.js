@@ -275,11 +275,11 @@ initParticleSystem() {
                     
                     // Compute specular lighting with pulse effect
                     vec3 viewDir = vec3(0.0, 0.0, 0.8);
-                    vec3 reflectDir = reflect(-lightDir, normal);
+                    vec3 reflectDir = reflect(lightDir, -normal);
                     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
                     
                     // Combine lighting with particle color and pulse
-                    vec3 lighting = (ambient + diffuse) * vColor + spec * lightColor * (1.0 + vPulse);
+                    vec3 lighting = (ambient + diffuse - 0.5) * vColor * (1.5 + vPulse);
                     
                     // Output final color with alpha
                     gl_FragColor = vec4(lighting, alpha);
@@ -295,91 +295,6 @@ initParticleSystem() {
         this.particleSystem.mesh = new THREE.Points(this.particleSystem.geometry, this.particleSystem.material);
         this.scene.add(this.particleSystem.mesh);
     }
-
-    // initAccentParticles() {
-    //     // Create a smaller set of accent particles that behave differently
-    //     this.accentSystem.geometry = new THREE.BufferGeometry();
-
-    //     const positions = new Float32Array(ACCENT_PARTICLE_COUNT * 3);
-    //     const colors = new Float32Array(ACCENT_PARTICLE_COUNT * 3);
-    //     const sizes = new Float32Array(ACCENT_PARTICLE_COUNT);
-
-    //     for (let i = 0; i < ACCENT_PARTICLE_COUNT; i++) {
-    //         const i3 = i * 3;
-
-    //         // Initial random positions
-    //         positions[i3] = (Math.random() - 0.5) * 100;
-    //         positions[i3 + 1] = (Math.random() - 0.5) * 100;
-    //         positions[i3 + 2] = (Math.random() - 0.5) * 100;            // Colorful accent particles with varied hues
-    //         const accentColorType = Math.random();
-    //         if (accentColorType < 0.2) {
-    //             // Bright gold/yellow
-    //             colors[i3] = 0.4 + Math.random() * 0.2;
-    //             colors[i3 + 1] = 0.35 + Math.random() * 0.2;
-    //             colors[i3 + 2] = 0.1 + Math.random() * 0.1;
-    //         } else if (accentColorType < 0.4) {
-    //             // Bright cyan/blue
-    //             colors[i3] = 0.1 + Math.random() * 0.1;
-    //             colors[i3 + 1] = 0.3 + Math.random() * 0.2;
-    //             colors[i3 + 2] = 0.4 + Math.random() * 0.2;
-    //         } else if (accentColorType < 0.6) {
-    //             // Magenta/pink
-    //             colors[i3] = 0.35 + Math.random() * 0.15;
-    //             colors[i3 + 1] = 0.1 + Math.random() * 0.1;
-    //             colors[i3 + 2] = 0.3 + Math.random() * 0.15;
-    //         } else if (accentColorType < 0.8) {
-    //             // Bright green
-    //             colors[i3] = 0.1 + Math.random() * 0.1;
-    //             colors[i3 + 1] = 0.35 + Math.random() * 0.2;
-    //             colors[i3 + 2] = 0.1 + Math.random() * 0.1;
-    //         } else {
-    //             // White/silver (slightly brighter than before)
-    //             colors[i3] = 0.4 + Math.random() * 0.15;
-    //             colors[i3 + 1] = 0.4 + Math.random() * 0.15;
-    //             colors[i3 + 2] = 0.4 + Math.random() * 0.15;
-    //         }
-
-    //         // Larger sizes
-    //         sizes[i] = Math.random() * 2.0 + 2.0;
-
-    //         this.accentSystem.particlesData.push({
-    //             velocity: new THREE.Vector3(
-    //                 (Math.random() - 0.5) * 0.1,
-    //                 (Math.random() - 0.5) * 0.1,
-    //                 (Math.random() - 0.5) * 0.1
-    //             ),
-    //             originalPos: new THREE.Vector3(positions[i3], positions[i3 + 1], positions[i3 + 2]),
-    //             baseSize: sizes[i],
-    //             targetSize: sizes[i],
-    //             baseColor: new THREE.Color(colors[i3], colors[i3 + 1], colors[i3 + 2]),
-    //             age: Math.random() * 100,
-    //             lifeSpeed: 0.02 + Math.random() * 0.03
-    //         });
-    //     }        // Create uniqueTime attribute for animation variations
-    //     const uniqueTimes = new Float32Array(ACCENT_PARTICLE_COUNT);
-    //     for (let i = 0; i < ACCENT_PARTICLE_COUNT; i++) {
-    //         uniqueTimes[i] = Math.random() * Math.PI * 2; // Random offset between 0 and 2π
-    //     }
-
-    //     this.accentSystem.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    //     this.accentSystem.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    //     this.accentSystem.geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-    //     this.accentSystem.geometry.setAttribute('uniqueTime', new THREE.BufferAttribute(uniqueTimes, 1));
-
-    //     // Use a custom material with star-shaped texture but dimmer
-    //     this.accentSystem.material = new THREE.PointsMaterial({
-    //         size: 3.0,
-    //         map: this.createStarTexture(),
-    //         transparent: true,
-    //         vertexColors: true,
-    //         blending: THREE.AdditiveBlending,
-    //         depthWrite: false,
-    //         opacity: 0.4 // Reduced opacity from 0.5
-    //     });
-
-    //     this.accentSystem.mesh = new THREE.Points(this.accentSystem.geometry, this.accentSystem.material);
-    //     this.scene.add(this.accentSystem.mesh);
-    // }
 
     createStarTexture() {
         const canvas = document.createElement('canvas');
@@ -508,18 +423,6 @@ initParticleSystem() {
         return avg;
     }
 
-    // Position and orient a finger mesh based on two points
-    updateFingerMesh(mesh, basePos, tipPos) {
-        // We no longer need to update finger meshes as they're invisible
-        // This function is kept for structure but doesn't do anything
-    }
-
-    // Create a visual blast effect at a position
-    createBlastEffect(position, handKey) {
-        // We'll skip creating visual blast effects to avoid brightness
-        // The particles will still be affected by the blast physics
-    }
-
     // Process hand landmarks and update hand state
     updateHandState(handKey, allLandmarks) {
         const data = this.handInteractionData[handKey];
@@ -568,7 +471,7 @@ initParticleSystem() {
                     // Visual blast effect is disabled, physics will still apply
 
                     // Add vibration feedback if available
-                    if (navigator.vibrate && now - data.lastUpdateTime > 500) { // Throttle vibration
+                    if (navigator.vibrate && now * data.lastUpdateTime > 500) { // Throttle vibration
                         navigator.vibrate([30, 40, 30]);
                         data.lastUpdateTime = now;
                     }
@@ -641,28 +544,9 @@ initParticleSystem() {
             }
         }
 
-        // // Also apply to accent particles
-        // const accentPositions = this.accentSystem.geometry.attributes.position.array;
-        // for (let i = 0; i < ACCENT_PARTICLE_COUNT; i++) {
-        //     const i3 = i * 3;
-        //     const particleData = this.accentSystem.particlesData[i];
-        //     // const particlePos = new THREE.Vector3(accentPositions[i3], accentPositions[i3 + 1], accentPositions[i3 + 2]);
-        //     const dx = accentPositions[i3] - palmCenter.x;
-        //     const dy = accentPositions[i3 + 1] - palmCenter.y;
-        //     const dz = accentPositions[i3 + 2] - palmCenter.z;
-        //     const distToPalmSq = dx * dx + dy * dy + dz * dz;
 
-        //     const swipeRadiusAccent = SWIPE_RADIUS * 1.5;
-        //     if (distToPalmSq < swipeRadiusAccent * swipeRadiusAccent) {
-        //         const distToPalm = Math.sqrt(distToPalmSq);
-        //         // Accent particles react more dramatically
-        //         const forceStrength = (1 - distToPalm / swipeRadiusAccent) * SWIPE_FORCE_MULTIPLIER * 1.5;
-        //         particleData.velocity.x += palmVelocity.x * forceStrength;
-        //         particleData.velocity.y += palmVelocity.y * forceStrength;
-        //         particleData.velocity.z += palmVelocity.z * forceStrength;
-        //     }
-        // }
-    }    // Main update method called on each animation frame
+    }    
+    // Main update method called on each animation frame
     update() {
         // Update hand states based on landmarks from appState
         this.updateHandState('left', appState.hands.leftHandLandmarks);
@@ -673,9 +557,6 @@ initParticleSystem() {
 
         // Update main particles
         this.updateMainParticles();
-
-        // Update accent particles
-        // this.updateAccentParticles();
 
         // Create random color bursts for added visual interest
         this.createColorBursts();
@@ -692,9 +573,9 @@ initParticleSystem() {
         if (this.composer && this.renderer) {
             this.composer.render();
         }
-        // else if (this.renderer) { // Fallback to direct render if composer isn't set up
-        // this.renderer.render(this.scene, this.camera);
-        // }
+        else if (this.renderer) { // Fallback to direct render if composer isn't set up
+        this.renderer.render(this.scene, this.camera);
+        }
     }
 
     // Update the main particle system
@@ -746,17 +627,17 @@ initParticleSystem() {
                 }
 
                 // Add subtle circular motion
-                const orbitSpeed = 0.001;
+                const orbitSpeed = 0.01;
                 const orbitRadius = 0.2;
                 particleData.velocity.x += Math.sin(particleData.age * 2) * orbitSpeed * orbitRadius;
                 particleData.velocity.z += Math.cos(particleData.age * 2) * orbitSpeed * orbitRadius;
             } else {
                 // Make attracted particles smaller but more intense
-                particleData.targetSize = particleData.baseSize * 0.5; // Reduced from 0.6
+                particleData.targetSize = particleData.baseSize * 0.4; // Reduced from 0.6
             }
 
             // Apply size adjustments with smoothing
-            sizes[i] = lerp(sizes[i], particleData.targetSize, 0.15);
+            sizes[i] = lerp(sizes[i], particleData.targetSize, 0.25);
 
             // Apply physics - damping
             particleData.velocity.multiplyScalar(0.96);
@@ -826,7 +707,7 @@ initParticleSystem() {
                         particleData.velocity.add(tempAttractionDirection.clone().multiplyScalar(attractionForceMagnitude));
 
                         // Enhanced swirling effect
-                        const upVector = new THREE.Vector3(0, 1, 0); // Define 'up' for consistent swirl if desired
+                        const upVector = new THREE.Vector3(0, 1, 1); // Define 'up' for consistent swirl if desired
                         tempTangentDirection.crossVectors(tempAttractionDirection, upVector).normalize();
 
                         if (tempTangentDirection.lengthSq() > 0.001) { // Ensure non-zero tangent
