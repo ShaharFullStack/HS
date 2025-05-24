@@ -15,15 +15,15 @@ let frameCount = 0;
 let lastAudioUpdate = 0;
 let lastDrawUpdate = 0;
 let previousStates = {
-  leftHand: { note: null, volume: null, isPresent: false },
-  rightHand: { note: null, volume: null, isPresent: false }
+  leftHand: { note: null, volume: null, isPresent: false, yPosition: 0.5, lastSignificantY: 0.5 },
+  rightHand: { note: null, volume: null, isPresent: false, yPosition: 0.5 }
 };
 
 // Configuration constants
-const AUDIO_UPDATE_INTERVAL = 50; // Update audio every 50ms (20 FPS)
-const DRAW_UPDATE_INTERVAL = 33;  // Update visuals every 33ms (30 FPS)
-const POSITION_THRESHOLD = 0.02;  // Minimum change to trigger audio update
-const VOLUME_THRESHOLD = 0.05;    // Minimum volume change to trigger update
+const AUDIO_UPDATE_INTERVAL = 20;  // 50 FPS for smooth audio
+const DRAW_UPDATE_INTERVAL = 33;   // 30 FPS for visuals
+const POSITION_THRESHOLD = 0.018;  // Minimum change to trigger audio update
+const VOLUME_THRESHOLD = 0.04;     // Minimum volume change to trigger update
 
 export function setupWebcamElements() {
   videoElement = document.querySelector('.input_video');
@@ -52,18 +52,17 @@ export function setupHandTracking() {
 
     hands.setOptions({
       maxNumHands: 2,
-      modelComplexity: 0, // Reduced from 1 for better performance
-      minDetectionConfidence: 0.7, // Slightly reduced from 0.75
-      minTrackingConfidence: 0.7    // Slightly reduced from 0.75
+      modelComplexity: 0, // Fastest for best performance
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
     });
 
     hands.onResults(onHandResults);
 
     const mpCamera = new Camera(videoElement, {
       onFrame: async () => {
-        // Throttle hand detection to every 2nd frame for better performance
         frameCount++;
-        if (frameCount % 2 === 0 && videoElement.readyState >= 2) {
+        if (frameCount % 2 === 0 && videoElement.readyState >= 2) { // Every 2nd frame
           await hands.send({ image: videoElement });
         }
       },
@@ -150,7 +149,9 @@ function onHandResults(results) {
             const thumbTip = landmarks[4];
             const indexTip = landmarks[8];
             const pinchDist = calculateDistance(thumbTip, indexTip);
-            const note = getNoteFromPosition(wrist.y);
+            
+            // Update position tracking
+            previousStates.rightHand.yPosition = wrist.y;
 
             // Only update audio if enough time has passed and values changed significantly
             if (shouldUpdateAudioNow) {
@@ -161,8 +162,9 @@ function onHandResults(results) {
                 prevState.volume = pinchDist;
               }
               
-              if (note !== prevState.note) {
-                playMelodyNote(note);
+              const note = getNoteFromPosition(wrist.y);
+              if (note !== prevState.note || hasSignificantChange(wrist.y, prevState.yPosition, POSITION_THRESHOLD)) {
+                playMelodyNote(note, wrist.y); // Pass position for velocity calculation
                 prevState.note = note;
               }
             }
@@ -178,7 +180,9 @@ function onHandResults(results) {
             const thumbTip = landmarks[4];
             const indexTip = landmarks[8];
             const pinchDist = calculateDistance(thumbTip, indexTip);
-            const chord = getChordFromPosition(wrist.y);
+            
+            // Update position tracking
+            previousStates.leftHand.yPosition = wrist.y;
 
             // Only update audio if enough time has passed and values changed significantly
             if (shouldUpdateAudioNow) {
@@ -189,9 +193,17 @@ function onHandResults(results) {
                 prevState.volume = pinchDist;
               }
               
-              if (chord !== prevState.note) {
-                playChord(chord);
+              const chord = getChordFromPosition(wrist.y);
+              
+              // More sophisticated chord change detection
+              const chordChanged = !chord || !prevState.note || 
+                                   chord.name !== prevState.note.name ||
+                                   hasSignificantChange(wrist.y, prevState.lastSignificantY, POSITION_THRESHOLD * 1.5);
+              
+              if (chordChanged) {
+                playChord(chord, wrist.y); // Pass position for velocity calculation
                 prevState.note = chord;
+                prevState.lastSignificantY = wrist.y;
               }
             }
           }
@@ -202,8 +214,8 @@ function onHandResults(results) {
       if (shouldDraw) {
         const handColor = isLeftHandMediaPipe ? 'rgba(0, 255, 200, 0.8)' : 'rgb(231, 150, 0)';
         if (window.drawConnectors && window.HAND_CONNECTIONS) {
-          drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: handColor, lineWidth: 6 }); // Reduced line width
-          drawLandmarks(canvasCtx, landmarks, { color: handColor, lineWidth: 1, radius: 1 }); // Reduced radius
+          drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: handColor, lineWidth: 6 });
+          drawLandmarks(canvasCtx, landmarks, { color: handColor, lineWidth: 1, radius: 1 });
         }
       }
     }
@@ -218,25 +230,47 @@ function onHandResults(results) {
     appState.hands.initialHandDetected = false;
     if (wasRightHandPresent) {
       stopMelody();
-      previousStates.rightHand = { note: null, volume: null, isPresent: false };
+      previousStates.rightHand = { note: null, volume: null, isPresent: false, yPosition: 0.5 };
     }
     if (wasLeftHandPresent) {
       stopChord();
-      previousStates.leftHand = { note: null, volume: null, isPresent: false };
+      previousStates.leftHand = { note: null, volume: null, isPresent: false, yPosition: 0.5, lastSignificantY: 0.5 };
     }
   }
 
   // Stop sounds if a specific hand disappears
   if (!appState.hands.isRightHandPresent && wasRightHandPresent) {
     stopMelody();
-    previousStates.rightHand = { note: null, volume: null, isPresent: false };
+    previousStates.rightHand = { note: null, volume: null, isPresent: false, yPosition: 0.5 };
   }
   if (!appState.hands.isLeftHandPresent && wasLeftHandPresent) {
     stopChord();
-    previousStates.leftHand = { note: null, volume: null, isPresent: false };
+    previousStates.leftHand = { note: null, volume: null, isPresent: false, yPosition: 0.5, lastSignificantY: 0.5 };
   }
 
   if (shouldDraw) {
     canvasCtx.restore();
   }
+}
+
+// Debug function for performance monitoring
+export function getHandTrackingStats() {
+  return {
+    frameCount: frameCount,
+    audioUpdateInterval: AUDIO_UPDATE_INTERVAL,
+    drawUpdateInterval: DRAW_UPDATE_INTERVAL,
+    leftHandPosition: previousStates.leftHand.yPosition,
+    rightHandPosition: previousStates.rightHand.yPosition,
+    leftHandNote: previousStates.leftHand.note?.name || 'none',
+    rightHandNote: previousStates.rightHand.note || 'none',
+    thresholds: {
+      position: POSITION_THRESHOLD,
+      volume: VOLUME_THRESHOLD
+    }
+  };
+}
+
+// Export for console debugging
+if (typeof window !== 'undefined') {
+  window.getHandTrackingStats = getHandTrackingStats;
 }
