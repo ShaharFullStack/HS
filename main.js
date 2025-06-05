@@ -1,4 +1,4 @@
-// main.js - Simple optimized version
+// main.js - Simple optimized version  
 import * as Tone from 'tone';
 import * as Hands from '@mediapipe/hands';
 import * as Camera from '@mediapipe/camera_utils';
