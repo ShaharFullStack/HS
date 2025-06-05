@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import * as Config from './config.js';
 import * as THREE_Scene from './visuals/scene.js';
 import { HandReactiveParticles } from './visuals/particleSystem.js';
-import * as HandTracking from './handTracking/handTracker.js';
+import * as HandTracking from './handtracking/handTracker.js';
 import * as UI from './ui/uiManager.js';
 
 // Optimized app state - keeping it simple
