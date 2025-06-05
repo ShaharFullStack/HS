@@ -3,7 +3,7 @@
 // Music theory variables
 export let selectedScale = 'major';
 export let selectedRoot = 'C';
-export let octave = 4;
+export let octave = 5;
 export let selectedSound = 'pad';
 
 // Scales definition
